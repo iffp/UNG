@@ -24,7 +24,7 @@ namespace ANNS {
                 cur->children[label] = std::make_shared<TrieNode>(label, cur);
 
                 // update max label id and label_to_nodes
-                if (label > _max_label_id) {
+                if (label >= _max_label_id) {
                     _max_label_id = label;
                     _label_to_nodes.resize(_max_label_id+1);
                 }
