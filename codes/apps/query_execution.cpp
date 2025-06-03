@@ -14,6 +14,9 @@
 
 using namespace std;
 
+// Global atomic to store peak thread count
+std::atomic<int> peak_threads(1);
+
 int main(int argc, char** argv) {
     // Restrict number of threads to 1 for query execution
     omp_set_num_threads(1);
