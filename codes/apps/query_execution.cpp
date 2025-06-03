@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     
     // Execute queries (timed)
 	auto start_time = std::chrono::high_resolution_clock::now();
-	ung_index.search(query_storage, distance_handler, nthreads, L_search, num_entry_points, scenario, k, results, num_cmps);
+	ung_index.search(query_storage, distance_handler, 1, L_search, num_entry_points, scenario, k, results, num_cmps);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
     // Stop thread count monitoring
