@@ -7,15 +7,20 @@
 #include "uni_nav_graph.h"
 #include "utils.h"
 
-#include <thread>
+#include <atomic>
+#include <omp.h>
 #include "fanns_survey_helpers.cpp"
+#include "global_thread_counter.h"
 
 using namespace std;
 
 int main(int argc, char** argv) {
-    // Get number of threads
-    unsigned int nthreads = std::thread::hardware_concurrency();
-    std::cout << "Number of threads: " << nthreads << std::endl;
+    // Restrict number of threads to 1 for query execution
+    omp_set_num_threads(1);
+
+    // Monitor thread count
+    std::atomic<bool> done(false);
+    std::thread monitor(monitor_thread_count, std::ref(done));
 
     // Parameters 
     std::string path_query_vectors;
@@ -85,6 +90,10 @@ int main(int argc, char** argv) {
 	ung_index.search(query_storage, distance_handler, nthreads, L_search, num_entry_points, scenario, k, results, num_cmps);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
+    // Stop thread count monitoring
+    done = true;
+    monitor.join();
+
 	// Compute time
     std::chrono::duration<double> time_diff = end_time - start_time;
     double query_execution_time = time_diff.count();		
@@ -111,6 +120,7 @@ int main(int argc, char** argv) {
     // Report results
     double recall = (double)match_count / total_count;
     double qps = (double)n_queries / query_execution_time;
+	printf("Maximum number of threads: %d\n", peak_threads.load()-1);   // Subtract 1 because of the monitoring thread
     peak_memory_footprint();
     printf("Queries per second: %.3f\n", qps);
     printf("Recall: %.3f\n", recall);
