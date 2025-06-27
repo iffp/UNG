@@ -176,7 +176,7 @@ namespace ANNS {
         auto new_label_sets = new std::vector<LabelType>[num_points];
         for (auto i=0; i<num_points; ++i) {
 			std::uint64_t offset_dst = static_cast<std::uint64_t>(i) * dim;
-			std::uint64_t offset_src = static_cast<std::uint64_t>(old_id) * dim;
+			std::uint64_t offset_src = static_cast<std::uint64_t>(new_to_old_ids[i]) * dim;
 			std::size_t copy_bytes = static_cast<std::uint64_t>(dim) * sizeof(T);
 			std::memcpy(new_vecs + offset_dst, vecs + offset_src, copy_bytes);
             new_label_sets[i] = label_sets[new_to_old_ids[i]];
