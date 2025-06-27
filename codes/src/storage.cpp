@@ -89,8 +89,11 @@ namespace ANNS {
         file.read((char *)&num_points, sizeof(IdxType));
         file.read((char *)&dim, sizeof(IdxType));
         num_points = std::min(num_points, max_num_points);
-        vecs = static_cast<T*>(std::aligned_alloc(32, num_points * dim * sizeof(T)));
-        file.read((char *)vecs, num_points * dim * sizeof(T));
+
+		// Fix for FANNS survey to allow larger datasets
+		std::uint64_t alloc_size = static_cast<std::uint64_t>(num_points) * static_cast<std::uint64_t>(dim) * static_cast<std::uint64_t>(sizeof(T));
+		vecs = static_cast<T*>(std::aligned_alloc(32, alloc_size));
+        file.read((char *)vecs,static_cast<std::streamsize>(alloc_size));
         file.close();
 
         // for prefetch
@@ -167,13 +170,17 @@ namespace ANNS {
     void Storage<T>::reorder_data(const std::vector<IdxType>& new_to_old_ids) {
 
         // move the vectors and labels
-        auto new_vecs = static_cast<T*>(std::aligned_alloc(32, num_points * dim * sizeof(T)));
+		// Fix for FANNS survey to allow larger datasets
+		std::uint64_t alloc_size = static_cast<std::uint64_t>(num_points) * static_cast<std::uint64_t>(dim) * static_cast<std::uint64_t>(sizeof(T));
+        auto new_vecs = static_cast<T*>(std::aligned_alloc(32, alloc_size));
         auto new_label_sets = new std::vector<LabelType>[num_points];
         for (auto i=0; i<num_points; ++i) {
-            std::memcpy(new_vecs + i * dim, vecs + new_to_old_ids[i] * dim, dim * sizeof(T));
+			std::uint64_t offset_dst = static_cast<std::uint64_t>(i) * dim;
+			std::uint64_t offset_src = static_cast<std::uint64_t>(old_id) * dim;
+			std::size_t copy_bytes = static_cast<std::uint64_t>(dim) * sizeof(T);
+			std::memcpy(new_vecs + offset_dst, vecs + offset_src, copy_bytes);
             new_label_sets[i] = label_sets[new_to_old_ids[i]];
         }
-        
         // clean up
         delete[] vecs;
         delete[] label_sets;
